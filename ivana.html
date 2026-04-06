@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>InfraVision 3D | Diagnóstico da Infraestrutura Brasileira 2026</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- AOS Animation -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+            background: #0a0a2a;
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .hover-scale {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .hover-scale:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, #00b4aa, #00a3ff, #7c3aed);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .line-clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+        
+        .globe-showcase {
+            position: relative;
+            width: 100%;
+            height: 550px;
+            background: linear-gradient(145deg, #030318 0%, #0a0a2a 100%);
+            border-radius: 32px;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+        
+        #globe-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        
+        .globe-overlay-text {
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            pointer-events: none;
+            z-index: 10;
+        }
+        
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #ff3366;
+            border-radius: 50%;
+            position: relative;
+        }
+        
+        .pulse-dot::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            background-color: #ff3366;
+            border-radius: 50%;
+            animation: pulse-ring 1.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+        }
+        
+        @keyframes pulse-ring {
+            0% { transform: scale(1); opacity: 0.8; }
+            100% { transform: scale(3); opacity: 0; }
+        }
+        
+        .section-glow {
+            position: relative;
+        }
+        
+        .section-glow::before {
+            content: '';
+            position: absolute;
+            top: 20%;
+            left: 10%;
+            width: 80%;
+            height: 60%;
+            background: radial-gradient(circle, rgba(0,180,170,0.15) 0%, rgba(0,163,255,0.05) 50%, transparent 80%);
+            filter: blur(60px);
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="relative z-10">
+    <!-- Header Hero -->
+    <header class="relative overflow-hidden">
+        <div class="container mx-auto px-6 py-20 lg:py-28">
+            <div class="max-w-4xl mx-auto text-center" data-aos="fade-up">
+                <div class="inline-flex items-center gap-2 bg-white/10 backdrop-blur rounded-full px-4 py-2 mb-6">
+                    <span class="w-2 h-2 bg-teal-400 rounded-full animate-pulse"></span>
+                    <span class="text-sm text-white/90">Relatório 2026</span>
+                </div>
+                <h1 class="text-5xl lg:text-7xl font-black text-white mb-6 leading-tight">
+                    Diagnóstico da<br>
+                    <span class="gradient-text">Infraestrutura Brasileira</span>
+                </h1>
+                <p class="text-xl text-white/80 mb-8 max-w-2xl mx-auto">
+                    Dados atualizados sobre o déficit de infraestrutura em educação, saúde, saneamento, transporte e energia no Brasil.
+                </p>
+                <div class="flex flex-wrap gap-4 justify-center">
+                    <button onclick="document.getElementById('dados').scrollIntoView({behavior: 'smooth'})" class="px-8 py-3 bg-gradient-to-r from-teal-500 to-blue-600 rounded-full text-white font-semibold hover:shadow-lg hover:shadow-teal-500/25 transition-all transform hover:scale-105">
+                        Explorar Dados
+                    </button>
+                    <button onclick="document.getElementById('materias').scrollIntoView({behavior: 'smooth'})" class="px-8 py-3 bg-white/10 backdrop-blur rounded-full text-white font-semibold hover:bg-white/20 transition-all border border-white/20">
+                        Ler Matérias
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+    
+    <!-- Stats Cards -->
+    <section class="relative -mt-16 z-20 container mx-auto px-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+            <div class="glass-card rounded-2xl p-6 shadow-xl hover-scale" data-aos="fade-up" data-aos-delay="0">
+                <div class="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><path d="M12 6v6l4 2"/><circle cx="12" cy="12" r="10"/></svg>
+                </div>
+                <p class="text-3xl font-bold text-gray-800">42%</p>
+                <p class="text-sm text-gray-500 mt-1">Escolas sem estrutura</p>
+                <p class="text-xs text-gray-400 mt-2">Educação</p>
+            </div>
+            <div class="glass-card rounded-2xl p-6 shadow-xl hover-scale" data-aos="fade-up" data-aos-delay="100">
+                <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><path d="M22 12h-4l-3 9-4-18-3 9H2"/></svg>
+                </div>
+                <p class="text-3xl font-bold text-gray-800">38%</p>
+                <p class="text-sm text-gray-500 mt-1">Filas de espera na saúde</p>
+                <p class="text-xs text-gray-400 mt-2">Saúde Pública</p>
+            </div>
+            <div class="glass-card rounded-2xl p-6 shadow-xl hover-scale" data-aos="fade-up" data-aos-delay="200">
+                <div class="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2"><path d="M2 12h20M12 2v20"/></svg>
+                </div>
+                <p class="text-3xl font-bold text-gray-800">51%</p>
+                <p class="text-sm text-gray-500 mt-1">Sem coleta de esgoto</p>
+                <p class="text-xs text-gray-400 mt-2">Saneamento</p>
+            </div>
+            <div class="glass-card rounded-2xl p-6 shadow-xl hover-scale" data-aos="fade-up" data-aos-delay="300">
+                <div class="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2"><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>
+                </div>
+                <p class="text-3xl font-bold text-gray-800">35%</p>
+                <p class="text-sm text-gray-500 mt-1">Vias sem pavimentação</p>
+                <p class="text-xs text-gray-400 mt-2">Transporte</p>
+            </div>
+            <div class="glass-card rounded-2xl p-6 shadow-xl hover-scale" data-aos="fade-up" data-aos-delay="400">
+                <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2"><path d="M18 12h2a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-6a2 2 0 0 1 2-2h2"/><path d="M12 2v8"/><path d="M9 7l3 3 3-3"/></svg>
+                </div>
+                <p class="text-3xl font-bold text-gray-800">12%</p>
+                <p class="text-sm text-gray-500 mt-1">Sofrem com apagões</p>
+                <p class="text-xs text-gray-400 mt-2">Energia</p>
+            </div>
+        </div>
+    </section>
+    
+    <!-- SEÇÃO DO GLOBO 3D EM DESTAQUE -->
+    <section class="py-20 relative section-glow">
+        <div class="container mx-auto px-6">
+            <div class="text-center max-w-3xl mx-auto mb-10" data-aos="fade-up">
+                <span class="text-teal-400 text-sm font-semibold uppercase tracking-wider">Visualização Interativa</span>
+                <h2 class="text-3xl lg:text-4xl font-bold text-white mt-2">Mapa Global de Infraestrutura Crítica</h2>
+                <p class="text-white/60 mt-4"><span class="text-red-400 font-semibold">★ 180+ pontos vermelhos</span> indicam regiões com déficit de infraestrutura — <span class="text-teal-300">América do Sul, Ásia e África</span> em destaque</p>
+            </div>
+            
+            <div class="globe-showcase" data-aos="zoom-in-up" data-aos-duration="1200">
+                <div id="globe-canvas"></div>
+                <div class="globe-overlay-text">
+                    <div class="inline-flex items-center gap-3 bg-black/50 backdrop-blur-md rounded-full px-5 py-2">
+                        <div class="pulse-dot"></div>
+                        <span class="text-white text-sm font-medium">Gire e explore | 180+ pontos críticos</span>
+                    </div>
+                </div>
+            </div>
+            <div class="flex justify-center gap-6 mt-6 text-white/60 text-sm">
+                <div class="flex items-center gap-2"><div class="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div><span>Áreas com déficit severo</span></div>
+                <div class="flex items-center gap-2"><div class="w-3 h-3 bg-blue-300 rounded-full"></div><span>Satélites em órbita</span></div>
+                <div class="flex items-center gap-2 cursor-pointer hover:text-teal-300 transition" id="resetGlobeBtn">🔄 Centralizar Globo</div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Gráficos Section -->
+    <section id="dados" class="py-20">
+        <div class="container mx-auto px-6">
+            <div class="text-center max-w-3xl mx-auto mb-12" data-aos="fade-up">
+                <span class="text-teal-300 text-sm font-semibold uppercase tracking-wider">Análise de Dados</span>
+                <h2 class="text-3xl lg:text-4xl font-bold text-white mt-2">Déficit de Infraestrutura por Setor</h2>
+                <p class="text-white/60 mt-4">Percentual de déficit em cada área essencial para a população brasileira</p>
+            </div>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                <div class="glass-card rounded-2xl p-6 shadow-lg" data-aos="fade-right">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Déficit por Setor (%)</h3>
+                    <canvas id="deficitChart" height="300"></canvas>
+                </div>
+                
+                <div class="glass-card rounded-2xl p-6 shadow-lg" data-aos="fade-left">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Pessoas Afetadas por Setor</h3>
+                    <canvas id="affectedChart" height="300"></canvas>
+                </div>
+            </div>
+            
+            <div class="mt-12" data-aos="fade-up">
+                <div class="glass-card rounded-2xl p-6 shadow-lg">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Estados com Maior Déficit de Infraestrutura</h3>
+                    <div class="space-y-4" id="estados-container"></div>
+                    <p class="text-xs text-gray-400 mt-4">*Índice baseado em déficit combinado de educação, saúde, saneamento, transporte e energia</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Matérias Section -->
+    <section id="materias" class="py-20 bg-white/5">
+        <div class="container mx-auto px-6">
+            <div class="text-center max-w-3xl mx-auto mb-12" data-aos="fade-up">
+                <span class="text-teal-400 text-sm font-semibold uppercase tracking-wider">Artigos e Reportagens</span>
+                <h2 class="text-3xl lg:text-4xl font-bold text-white mt-2">Análises Especiais</h2>
+                <p class="text-white/60 mt-4">Conteúdo exclusivo sobre a realidade da infraestrutura no Brasil</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" id="materias-container"></div>
+        </div>
+    </section>
+    
+    <!-- Infográfico -->
+    <section class="py-20 bg-teal-900/30 backdrop-blur-sm">
+        <div class="container mx-auto px-6">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                <div data-aos="fade-right">
+                    <span class="text-teal-300 text-sm font-semibold uppercase tracking-wider">Infográfico</span>
+                    <h2 class="text-3xl lg:text-4xl font-bold text-white mt-2">Impacto Real na População</h2>
+                    <p class="text-teal-100 mt-4 leading-relaxed">
+                        Mais de 100 milhões de brasileiros são diretamente afetados pela falta de infraestrutura adequada em suas cidades.
+                    </p>
+                    <div class="mt-8 space-y-4">
+                        <div class="flex items-center gap-3"><div class="w-10 h-10 bg-red-500/20 rounded-lg flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg></div><div><p class="text-white font-semibold">180 mil escolas sem estrutura</p><p class="text-teal-200 text-sm">8,5 milhões de estudantes afetados</p></div></div>
+                        <div class="flex items-center gap-3"><div class="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2"><path d="M22 12h-4l-3 9-4-18-3 9H2"/></svg></div><div><p class="text-white font-semibold">320 mil procedimentos em espera no SUS</p><p class="text-teal-200 text-sm">Tempo médio: 8 meses</p></div></div>
+                        <div class="flex items-center gap-3"><div class="w-10 h-10 bg-orange-500/20 rounded-lg flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fb923c" stroke-width="2"><path d="M2 12h20M12 2v20"/></svg></div><div><p class="text-white font-semibold">35 milhões sem coleta de esgoto</p><p class="text-teal-200 text-sm">Risco de doenças e contaminação</p></div></div>
+                    </div>
+                </div>
+                <div class="relative" data-aos="fade-left">
+                    <div class="bg-white/10 backdrop-blur rounded-2xl p-8 border border-white/20">
+                        <div class="text-center mb-6"><p class="text-6xl font-black text-white">R$ 420 Bi</p><p class="text-teal-200 text-sm">Investimento necessário</p></div>
+                        <div class="space-y-3">
+                            <div class="flex justify-between text-sm text-white"><span>Educação</span><span>R$ 85 Bi</span></div><div class="w-full bg-white/20 rounded-full h-2"><div class="bg-red-500 h-2 rounded-full" style="width: 20%"></div></div>
+                            <div class="flex justify-between text-sm text-white mt-3"><span>Saúde</span><span>R$ 112 Bi</span></div><div class="w-full bg-white/20 rounded-full h-2"><div class="bg-blue-500 h-2 rounded-full" style="width: 27%"></div></div>
+                            <div class="flex justify-between text-sm text-white mt-3"><span>Saneamento</span><span>R$ 156 Bi</span></div><div class="w-full bg-white/20 rounded-full h-2"><div class="bg-orange-500 h-2 rounded-full" style="width: 37%"></div></div>
+                            <div class="flex justify-between text-sm text-white mt-3"><span>Transporte</span><span>R$ 45 Bi</span></div><div class="w-full bg-white/20 rounded-full h-2"><div class="bg-yellow-500 h-2 rounded-full" style="width: 11%"></div></div>
+                            <div class="flex justify-between text-sm text-white mt-3"><span>Energia</span><span>R$ 22 Bi</span></div><div class="w-full bg-white/20 rounded-full h-2"><div class="bg-purple-500 h-2 rounded-full" style="width: 5%"></div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Footer -->
+    <footer class="bg-black/50 py-8">
+        <div class="container mx-auto px-6 text-center">
+            <p class="text-white/40 text-sm">© 2026 InfraVision - Mapeamento da Infraestrutura Brasileira</p>
+            <p class="text-white/30 text-xs mt-2">Fontes: IBGE, INEP, SNIS, ANEEL, UNESCO, Banco Mundial</p>
+        </div>
+    </footer>
+</div>
+
+<script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
+        }
+    }
+</script>
+
+<script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    
+    // ============================================
+    // GLOBO 3D CORRETO - SOMENTE NA SEÇÃO
+    // ============================================
+    const container = document.getElementById('globe-canvas');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x030318);
+    
+    // Câmera na distância correta
+    const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+    camera.position.set(0, 0, 2.8);  // Distância perfeita
+    
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    container.appendChild(renderer.domElement);
+    
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 0.8;
+    controls.enableZoom = true;
+    controls.enablePan = false;
+    controls.zoomSpeed = 0.5;
+    controls.maxDistance = 4;
+    controls.minDistance = 1.5;
+    
+    // Estrelas suaves
+    const starGeometry = new THREE.BufferGeometry();
+    const starCount = 1500;
+    const starPositions = new Float32Array(starCount * 3);
+    for (let i = 0; i < starCount; i++) {
+        starPositions[i*3] = (Math.random() - 0.5) * 800;
+        starPositions[i*3+1] = (Math.random() - 0.5) * 500;
+        starPositions[i*3+2] = (Math.random() - 0.5) * 200 - 50;
+    }
+    starGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+    const stars = new THREE.Points(starGeometry, new THREE.PointsMaterial({ color: 0xffffff, size: 0.15, transparent: true, opacity: 0.5 }));
+    scene.add(stars);
+    
+    // Texturas da Terra
+    const textureLoader = new THREE.TextureLoader();
+    const earthMap = textureLoader.load('https://threejs.org/examples/textures/planets/earth_atmos_2048.jpg');
+    const earthSpecularMap = textureLoader.load('https://threejs.org/examples/textures/planets/earth_specular_2048.jpg');
+    const earthNormalMap = textureLoader.load('https://threejs.org/examples/textures/planets/earth_normal_2048.jpg');
+    const cloudMap = textureLoader.load('https://threejs.org/examples/textures/planets/earth_clouds_1024.png');
+    
+    const earthGeometry = new THREE.SphereGeometry(1, 128, 128);
+    const earthMaterial = new THREE.MeshPhongMaterial({
+        map: earthMap,
+        specularMap: earthSpecularMap,
+        specular: new THREE.Color('grey'),
+        shininess: 5,
+        normalMap: earthNormalMap
+    });
+    const earth = new THREE.Mesh(earthGeometry, earthMaterial);
+    scene.add(earth);
+    
+    // Nuvens
+    const cloudGeometry = new THREE.SphereGeometry(1.008, 128, 128);
+    const cloudMaterial = new THREE.MeshPhongMaterial({
+        map: cloudMap,
+        transparent: true,
+        opacity: 0.12,
+        blending: THREE.AdditiveBlending
+    });
+    const clouds = new THREE.Mesh(cloudGeometry, cloudMaterial);
+    scene.add(clouds);
+    
+    // Atmosfera
+    const atmosphereGeometry = new THREE.SphereGeometry(1.015, 128, 128);
+    const atmosphereMaterial = new THREE.MeshPhongMaterial({
+        color: 0x44aaff,
+        transparent: true,
+        opacity: 0.08,
+        side: THREE.BackSide
+    });
+    const atmosphere = new THREE.Mesh(atmosphereGeometry, atmosphereMaterial);
+    scene.add(atmosphere);
+    
+    // Função de coordenadas
+    const EARTH_RADIUS = 1.01;
+    function latLonToVector3(lat, lon) {
+        const phi = (90 - lat) * Math.PI / 180;
+        const theta = lon * Math.PI / 180;
+        return new THREE.Vector3(
+            EARTH_RADIUS * Math.sin(phi) * Math.cos(theta),
+            EARTH_RADIUS * Math.cos(phi),
+            EARTH_RADIUS * Math.sin(phi) * Math.sin(theta)
+        );
+    }
+    
+    // ============================================
+    // PONTOS VERMELHOS - AMÉRICA DO SUL, ÁSIA, ÁFRICA
+    // ============================================
+    const pontosGroup = new THREE.Group();
+    
+    // América do Sul (80 pontos - muitas cidades e regiões)
+    const sulAmerica = [
+        // Capitais e grandes cidades
+        { lat: -23.5505, lng: -46.6333 }, { lat: -22.9068, lng: -43.1729 }, { lat: -15.8267, lng: -47.9218 },
+        { lat: -12.9714, lng: -38.5014 }, { lat: -8.0476, lng: -34.8770 }, { lat: -30.0346, lng: -51.2177 },
+        { lat: -25.4284, lng: -49.2673 }, { lat: -1.4558, lng: -48.4902 }, { lat: -19.9167, lng: -43.9345 },
+        { lat: -3.7172, lng: -38.5434 }, { lat: -5.7945, lng: -35.2110 }, { lat: -9.9742, lng: -67.8246 },
+        { lat: -16.3719, lng: -49.3036 }, { lat: -20.4429, lng: -54.6464 }, { lat: -15.5989, lng: -56.0995 },
+        { lat: -2.5307, lng: -44.3068 }, { lat: -7.1153, lng: -34.8610 }, { lat: -22.7384, lng: -47.3791 },
+        { lat: -27.5954, lng: -48.5480 }, { lat: -34.6037, lng: -58.3816 }, { lat: -33.4489, lng: -70.6693 },
+        { lat: 4.7110, lng: -74.0721 }, { lat: -12.0464, lng: -77.0428 }, { lat: -0.1807, lng: -78.4678 },
+        { lat: 10.4806, lng: -66.9036 }, { lat: -16.5000, lng: -68.1500 }, { lat: -25.2637, lng: -57.5759 },
+        { lat: -34.9011, lng: -56.1645 }, { lat: -20.3155, lng: -40.3128 }, { lat: -8.8879, lng: -63.8275 },
+        { lat: -10.9472, lng: -37.0731 }, { lat: -21.1758, lng: -47.8102 }, { lat: -22.1215, lng: -51.3884 }
+    ];
+    // Pontos aleatórios na América do Sul
+    for (let i = 0; i < 50; i++) {
+        sulAmerica.push({ lat: -50 + Math.random() * 55, lng: -75 + Math.random() * 40 });
+    }
+    
+    // África (50 pontos)
+    const africa = [
+        { lat: 30.0444, lng: 31.2357 }, { lat: -33.9249, lng: 18.4241 }, { lat: -26.2041, lng: 28.0473 },
+        { lat: 14.7167, lng: -17.4677 }, { lat: 6.5244, lng: 3.3792 }, { lat: 9.0579, lng: 7.4951 },
+        { lat: 5.6037, lng: -0.1870 }, { lat: 12.6392, lng: -8.0029 }, { lat: 4.0511, lng: 9.7679 },
+        { lat: -1.2921, lng: 36.8219 }, { lat: -25.7461, lng: 28.1881 }, { lat: -18.8792, lng: 47.5079 },
+        { lat: 36.8065, lng: 10.1815 }, { lat: 33.5731, lng: -7.5898 }, { lat: 31.7917, lng: -7.0926 },
+        { lat: 6.4500, lng: 3.4000 }, { lat: 12.3714, lng: -1.5197 }, { lat: 0.3476, lng: 32.5825 }
+    ];
+    for (let i = 0; i < 35; i++) {
+        africa.push({ lat: -30 + Math.random() * 50, lng: -15 + Math.random() * 45 });
+    }
+    
+    // Ásia (55 pontos)
+    const asia = [
+        { lat: 35.6895, lng: 139.6917 }, { lat: 31.2304, lng: 121.4737 }, { lat: 39.9042, lng: 116.4074 },
+        { lat: 28.6139, lng: 77.2090 }, { lat: 19.0760, lng: 72.8777 }, { lat: 37.5665, lng: 126.9780 },
+        { lat: 13.7367, lng: 100.5231 }, { lat: 23.6978, lng: 120.9605 }, { lat: 3.1390, lng: 101.6869 },
+        { lat: 22.3193, lng: 114.1694 }, { lat: 27.7172, lng: 85.3240 }, { lat: 33.6844, lng: 73.0479 },
+        { lat: 55.7558, lng: 37.6173 }, { lat: 52.2297, lng: 21.0122 }, { lat: 50.4501, lng: 30.5234 },
+        { lat: 6.9271, lng: 79.8612 }, { lat: 21.0285, lng: 105.8542 }, { lat: 18.7883, lng: 98.9853 }
+    ];
+    for (let i = 0; i < 40; i++) {
+        asia.push({ lat: 8 + Math.random() * 45, lng: 65 + Math.random() * 70 });
+    }
+    
+    // Combinar todos os pontos
+    const todosPontos = [...sulAmerica, ...africa, ...asia];
+    console.log(`✅ Total de pontos críticos: ${todosPontos.length}`);
+    
+    // Criar os pontos vermelhos (tamanho pequeno e bem visíveis)
+    todosPontos.forEach(ponto => {
+        const position = latLonToVector3(ponto.lat, ponto.lng);
+        // Tamanho pequeno e proporcional
+        const size = 0.008;
+        const pontoGeometry = new THREE.SphereGeometry(size, 16, 16);
+        const pontoMaterial = new THREE.MeshStandardMaterial({
+            color: 0xff3366,
+            emissive: 0xff2200,
+            emissiveIntensity: 0.6
+        });
+        const pontoMesh = new THREE.Mesh(pontoGeometry, pontoMaterial);
+        pontoMesh.position.copy(position);
+        pontosGroup.add(pontoMesh);
+    });
+    scene.add(pontosGroup);
+    
+    // Animação pulsante dos pontos
+    let time = 0;
+    function animatePoints() {
+        requestAnimationFrame(animatePoints);
+        time += 0.04;
+        pontosGroup.children.forEach((ponto, idx) => {
+            const scale = 1 + Math.sin(time * 6 + idx * 0.3) * 0.2;
+            ponto.scale.set(scale, scale, scale);
+        });
+    }
+    animatePoints();
+    
+    // Anel decorativo (opcional)
+    const ringGeo = new THREE.BufferGeometry();
+    const ringCount = 300;
+    const ringPositions = new Float32Array(ringCount * 3);
+    for (let i = 0; i < ringCount; i++) {
+        const angle = (i / ringCount) * Math.PI * 2;
+        const radius = 1.18;
+        ringPositions[i*3] = Math.cos(angle) * radius;
+        ringPositions[i*3+1] = Math.sin(angle) * 0.2;
+        ringPositions[i*3+2] = Math.sin(angle) * radius;
+    }
+    ringGeo.setAttribute('position', new THREE.BufferAttribute(ringPositions, 3));
+    const ringPoints = new THREE.Points(ringGeo, new THREE.PointsMaterial({ color: 0x44aaff, size: 0.006, transparent: true, opacity: 0.3 }));
+    scene.add(ringPoints);
+    
+    // Luzes
+    const ambientLight = new THREE.AmbientLight(0x222222);
+    scene.add(ambientLight);
+    const mainLight = new THREE.DirectionalLight(0xffffff, 1.2);
+    mainLight.position.set(5, 3, 5);
+    scene.add(mainLight);
+    const fillLight = new THREE.PointLight(0x4466aa, 0.4);
+    fillLight.position.set(-2, 1, 3);
+    scene.add(fillLight);
+    
+    // Satélites pequenos
+    const satellites = [];
+    for (let i = 0; i < 4; i++) {
+        const sat = new THREE.Mesh(new THREE.BoxGeometry(0.025, 0.025, 0.05), new THREE.MeshStandardMaterial({ color: 0x88aaff, emissive: 0x3355aa, emissiveIntensity: 0.3 }));
+        const angle = (i / 4) * Math.PI * 2;
+        sat.userData = { angle, radius: 1.35, speed: 0.004 };
+        sat.position.x = Math.cos(angle) * 1.35;
+        sat.position.z = Math.sin(angle) * 1.35;
+        scene.add(sat);
+        satellites.push(sat);
+    }
+    
+    // Animação principal
+    let animTime = 0;
+    function animate() {
+        requestAnimationFrame(animate);
+        animTime += 0.01;
+        clouds.rotation.y += 0.0008;
+        stars.rotation.y += 0.0003;
+        ringPoints.rotation.y += 0.002;
+        
+        satellites.forEach(sat => {
+            sat.userData.angle += sat.userData.speed;
+            sat.position.x = Math.cos(sat.userData.angle) * sat.userData.radius;
+            sat.position.z = Math.sin(sat.userData.angle) * sat.userData.radius;
+            sat.rotation.x += 0.03;
+        });
+        
+        controls.update();
+        renderer.render(scene, camera);
+    }
+    animate();
+    
+    // Redimensionamento
+    window.addEventListener('resize', () => {
+        const width = container.clientWidth;
+        const height = container.clientHeight;
+        camera.aspect = width / height;
+        camera.updateProjectionMatrix();
+        renderer.setSize(width, height);
+    });
+    
+    // Reset do globo
+    document.getElementById('resetGlobeBtn')?.addEventListener('click', () => {
+        camera.position.set(0, 0, 2.8);
+        controls.target.set(0, 0, 0);
+        controls.update();
+    });
+    
+    // ============================================
+    // DADOS DO SITE
+    // ============================================
+    const estadosCriticos = [
+        { nome: "Amazonas", indice: 78, cor: "#ef4444" }, { nome: "Pará", indice: 72, cor: "#f97316" },
+        { nome: "Maranhão", indice: 69, cor: "#f97316" }, { nome: "Piauí", indice: 65, cor: "#eab308" },
+        { nome: "Alagoas", indice: 63, cor: "#eab308" }, { nome: "Bahia", indice: 61, cor: "#eab308" }
+    ];
+    
+    const materias = [
+        { titulo: "Educação em Crise: 42% das escolas sem infraestrutura básica", descricao: "Levantamento do InfraVision aponta que mais de 180 mil escolas públicas no Brasil não possuem bibliotecas, laboratórios ou estrutura adequada.", imagem: "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=800&h=500&fit=crop", autor: "Ana Silva", data: "15 Mar 2026", categoria: "Educação" },
+        { titulo: "Saneamento: 51% dos brasileiros vivem sem coleta de esgoto", descricao: "Dados alarmantes revelam que mais de 100 milhões de pessoas não têm acesso a saneamento básico adequado.", imagem: "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=800&h=500&fit=crop", autor: "Carlos Mendes", data: "12 Mar 2026", categoria: "Saneamento" },
+        { titulo: "Saúde Pública: Filas de espera ultrapassam 1 ano para cirurgias", descricao: "Sistema público de saúde enfrenta crise histórica com mais de 300 mil procedimentos em espera.", imagem: "https://images.unsplash.com/photo-1587351021759-3e566b6af7cc?w=800&h=500&fit=crop", autor: "Mariana Costa", data: "10 Mar 2026", categoria: "Saúde" },
+        { titulo: "Mobilidade Urbana: 35% das vias precisam de asfaltamento", descricao: "Mais de 2.8 milhões de pessoas são afetadas pela falta de pavimentação nas cidades brasileiras.", imagem: "https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?w=800&h=500&fit=crop", autor: "Rafael Oliveira", data: "08 Mar 2026", categoria: "Transporte" },
+        { titulo: "Energia Elétrica: 12% das residências sofrem com apagões", descricao: "Falta de investimento em infraestrutura elétrica afeta milhões de brasileiros.", imagem: "https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?w=800&h=500&fit=crop", autor: "Fernanda Lima", data: "05 Mar 2026", categoria: "Energia" }
+    ];
+    
+    const estadosContainer = document.getElementById('estados-container');
+    estadosCriticos.forEach(estado => {
+        estadosContainer.innerHTML += `<div><div class="flex justify-between text-sm mb-1"><span class="font-medium text-gray-700">${estado.nome}</span><span class="text-gray-500">${estado.indice}%</span></div><div class="w-full bg-gray-200 rounded-full h-2"><div class="h-2 rounded-full" style="width: ${estado.indice}%; background-color: ${estado.cor}"></div></div></div>`;
+    });
+    
+    const materiasContainer = document.getElementById('materias-container');
+    materias.forEach((materia, idx) => {
+        materiasContainer.innerHTML += `<div class="glass-card rounded-2xl overflow-hidden shadow-lg hover-scale transition-all duration-300" data-aos="fade-up" data-aos-delay="${idx * 100}"><div class="h-48 overflow-hidden"><img src="${materia.imagem}" alt="${materia.titulo}" class="w-full h-full object-cover transition-transform duration-500 hover:scale-110"></div><div class="p-6"><div class="flex items-center gap-2 mb-3"><span class="text-xs font-semibold text-teal-600 bg-teal-50 px-2 py-1 rounded-full">${materia.categoria}</span><span class="text-xs text-gray-400">${materia.data}</span></div><h3 class="text-xl font-bold text-gray-800 mb-2 line-clamp-2">${materia.titulo}</h3><p class="text-gray-500 text-sm mb-4 line-clamp-3">${materia.descricao}</p><div class="flex items-center justify-between"><span class="text-xs text-gray-400">Por ${materia.autor}</span><a href="#" class="text-teal-600 text-sm font-semibold hover:text-teal-700 transition-colors">Leia mais →</a></div></div></div>`;
+    });
+    
+    function initCharts() {
+        const deficitCtx = document.getElementById('deficitChart')?.getContext('2d');
+        if (deficitCtx) new Chart(deficitCtx, { type: 'bar', data: { labels: ['Educação', 'Saúde', 'Saneamento', 'Transporte', 'Energia'], datasets: [{ label: 'Déficit (%)', data: [42, 38, 51, 35, 12], backgroundColor: ['#ef4444', '#3b82f6', '#f97316', '#eab308', '#a855f7'], borderRadius: 8 }] }, options: { responsive: true, scales: { y: { beginAtZero: true, max: 60 } } } });
+        const affectedCtx = document.getElementById('affectedChart')?.getContext('2d');
+        if (affectedCtx) new Chart(affectedCtx, { type: 'pie', data: { labels: ['Saneamento (35M)', 'Transporte (2.8M)', 'Educação (180k)', 'Saúde (320k)'], datasets: [{ data: [35000000, 2800000, 180000, 320000], backgroundColor: ['#f97316', '#eab308', '#ef4444', '#3b82f6'] }] }, options: { plugins: { tooltip: { callbacks: { label: (ctx) => `${ctx.label}: ${(ctx.raw / 1000000).toFixed(1)}M pessoas` } } } } });
+    }
+    
+    setTimeout(() => { AOS.init({ duration: 1000, once: true }); initCharts(); }, 300);
+</script>
+</body>
+</html>
+```
